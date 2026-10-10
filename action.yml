@@ -1,6 +1,6 @@
 name: "PR Conventional"
 description: "Enforce & auto-fix Conventional Commits, PR titles & descriptions"
-author: "Your Name"
+author: "RedSamerai"
 branding:
   icon: "check-circle"
   color: "green"

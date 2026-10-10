@@ -28,6 +28,8 @@ jobs:
         run: node dist/index.js
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name == 'pull_request' && 'pull_request' || 'push' }}
+          # push 事件下此值为无效占位（src 的 push 分支读 .git/logs/HEAD，不读事件文件）；
+          # 仅 PR 事件真实使用。将来若要让 push 也校验样例 PR，再在 src/index.ts 加 fallback 逻辑。
           GITHUB_EVENT_PATH: ${{ github.event_name == 'pull_request' && github.event_path || './.ci-event.json' }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
