@@ -72,14 +72,15 @@ export async function resolvePushCommits(): Promise<CommitRef[]> {
   const eventName = process.env.GITHUB_EVENT_NAME;
   const git: SimpleGit = simpleGit(process.env.GITHUB_WORKSPACE || '.');
 
-  // 优先：从 push 事件 payload 读 before/after
+  // 优先：从 push 事件 payload 读 before/after（两者均为合法 40-hex 才走区间逻辑）
+  const HEX40 = /^[0-9a-f]{40}$/;
   if (eventName === 'push' && process.env.GITHUB_EVENT_PATH) {
     try {
       const event = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf-8'));
       const before: string = event.before;
       const after: string = event.after;
 
-      if (before && after && before !== ZERO_SHA) {
+      if (HEX40.test(before) && HEX40.test(after) && before !== ZERO_SHA) {
         // 校验 before..after 区间
         const shas: string[] = (await git.raw(['rev-list', `${before}..${after}`, `--max-count=${MAX_COMMITS_TO_CHECK}`]))
           .split('\n')
@@ -94,7 +95,7 @@ export async function resolvePushCommits(): Promise<CommitRef[]> {
       }
 
       // before 全零（新建分支）：校验 after 最近 MAX 个
-      if (after) {
+      if (HEX40.test(after)) {
         const logResult = await git.log({ maxCount: MAX_COMMITS_TO_CHECK });
         return logResult.all.map(c => ({ sha: c.hash, message: c.message }));
       }
