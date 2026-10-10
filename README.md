@@ -1,25 +1,24 @@
 # pr-conventional
 
-GitHub Action，强制并自动修复 Conventional Commits、PR 标题与描述规范。一次 push/PR 事件里校验**所有**新 commit、PR 标题与 Body，输出 SARIF，可选 `fix-mode` 自动修复（改 commit message、补 PR 正文段落、截断超长标题）。
+A GitHub Action that enforces — and can automatically fix — Conventional Commits, PR titles, and PR descriptions. On every `push` / `pull_request` it checks **all** new commits, the PR title, and the PR body, emits a SARIF report, and (opt-in) auto-fixes what it can.
 
-## 卖点
+## Why
 
-- **自动修复**：`fix-mode: true` 时，能修的直接修（commit message amend、PR body 追加缺失段落、标题截断），修完重算，全绿才 exit 0
-- **多 commit**：push 事件校验 `before..after` 区间全部 commit（上限 20），不再只查 HEAD 一条
-- **monorepo 友好**：`config-path` 指向任意目录，scope 正则约束模块边界
-- **SARIF**：每次运行产出 `pr-conventional.sarif`，接 `upload-sarif` 进 GitHub Security tab
+- **Auto-fix, not just fail.** With `fix-mode` on, it amends commit messages, appends missing PR-body sections, and truncates over-long titles — then re-validates. Only exits 0 when it's genuinely clean.
+- **Checks the whole push, not just HEAD.** A push of 5 commits is validated across the `before..after` range (up to 20), so no one smuggles bad commits through.
+- **Monorepo-aware.** Point `config-path` at any directory; constrain module boundaries with `scopeRegex`.
+- **SARIF out of the box.** Every run writes `pr-conventional.sarif`; pipe it into `upload-sarif` and findings land in the GitHub Security tab.
 
-## 快速上手
+## Quick start
 
-1. 在仓库放一份配置（示例见下）：`.github/pr-conventional.yml`
-2. 在 workflow 里调用：
+Drop a config file into your repo, then call the action from any workflow:
 
 ```yaml
 # .github/workflows/pr-check.yml
 name: PR Conventional
 on:
   push:
-    branches: [master, main]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -28,8 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # 多 commit 校验需要完整历史
-      - uses: RedSamerai/pr-conventional@master
+          fetch-depth: 0        # multi-commit validation needs full history
+      - uses: <owner>/pr-conventional@v0
         with:
           config-path: .github/pr-conventional.yml
           fix-mode: 'false'
@@ -39,29 +38,36 @@ jobs:
           sarif_file: pr-conventional.sarif
 ```
 
-> 发布到 Marketplace 后可换成 `RedSamerai/pr-conventional@v0` 等 tag。
-> **SARIF 进 Security tab 前提**：仓库需先在 Settings → Code security（左侧导航）→ Code scanning 启用 Code scanning（私有仓库默认关闭，无 API 可代启，需手动）。未启用时 `upload-sarif` 会 warning 但不阻塞（本仓库 self-check 用 `continue-on-error` 兜底）。
+> Publish to your account's Marketplace and reference by tag, e.g. `RedSamerai/pr-conventional@v0`.
 
-## 配置
+## Inputs
 
-配置文件默认路径 `.github/pr-conventional.yml`（可用 `config-path` 覆盖）。全字段表：
+| Input | Default | Description |
+|---|---|---|
+| `config-path` | `.github/pr-conventional.yml` | Path to the config file (YAML or JSON). |
+| `fix-mode` | `false` | `'true'` enables auto-fix. Requires write permission (see Token permissions). |
+| `token` | `${{ github.token }}` | Token used for fixes. Supply a PAT with `contents: write` to amend commits. |
 
-| 字段 | 类型 | 默认 | 说明 |
+## Configuration
+
+Default file location is `.github/pr-conventional.yml` (override with `config-path`). All fields:
+
+| Field | Type | Default | Notes |
 |---|---|---|---|
-| `rules.commit-message.enabled` | bool | `true` | 关闭 commit message 校验 |
-| `rules.commit-message.types` | string[] | 11 个标准 Conventional 类型 | 允许的 commit 类型白名单 |
-| `rules.commit-message.scopeRegex` | string | 无 | scope 必须匹配的正则（如 `^\w+$`） |
-| `rules.commit-message.subjectMaxLength` | number | `72` | subject 最大长度 |
-| `rules.pr-title.enabled` | bool | `true` | 关闭 PR 标题校验 |
-| `rules.pr-title.maxLength` | number | `100` | 标题最大长度，超长可自动截断 |
-| `rules.pr-title.pattern` | string | 无 | 标题必须匹配的正则（如 `^(feat\|fix\|docs)\(\w+\): .+`） |
-| `rules.pr-body.enabled` | bool | 无（默认关） | 启用 PR 正文校验 |
-| `rules.pr-body.requiredSections` | string[] | 无 | 正文必须包含的段落名（缺失会自动追加） |
-| `rules.pr-body.template` | string | 无 | 正文为空时的模板（仅空 body 时整段替换，不丢已有内容） |
-| `fixMode` | bool | `false` | 自动修复开关 |
-| `extends` | string[] | 无 | **尚未实现**，配置会打 warning 并忽略 |
+| `rules.commit-message.enabled` | bool | `true` | Disable commit-message checks. |
+| `rules.commit-message.types` | string[] | 11 standard Conventional types | Allow-list of commit types. |
+| `rules.commit-message.scopeRegex` | string | — | Scope must match (e.g. `^[a-z][a-z0-9-]*$`). |
+| `rules.commit-message.subjectMaxLength` | number | `72` | Max subject length. |
+| `rules.pr-title.enabled` | bool | `true` | Disable PR-title checks. |
+| `rules.pr-title.maxLength` | number | `100` | Max title length; over-length is auto-truncatable. |
+| `rules.pr-title.pattern` | string | — | Title must match a regex. |
+| `rules.pr-body.enabled` | bool | off | Enable PR-body checks. |
+| `rules.pr-body.requiredSections` | string[] | — | Sections the body must contain; missing ones are appended when `fix-mode` is on. |
+| `rules.pr-body.template` | string | — | Used only when the body is empty (never overwrites existing content). |
+| `fixMode` | bool | `false` | Config-file switch for auto-fix (in addition to the `fix-mode` input). |
+| `extends` | string[] | — | Reserved, not implemented — a warning is logged and it is ignored. |
 
-### 对外示例配置
+### Example
 
 ```yaml
 # .github/pr-conventional.yml
@@ -70,7 +76,7 @@ rules:
   commit-message:
     enabled: true
     types: [feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert]
-    scopeRegex: '^[a-z][a-z0-9-]*$'   # monorepo：约束模块 scope
+    scopeRegex: '^[a-z][a-z0-9-]*$'
     subjectMaxLength: 72
   pr-title:
     enabled: true
@@ -83,39 +89,47 @@ rules:
       ## 测试方案
 
       ## 回滚方案
-
 ```
 
-## Token 权限
+## Token permissions
 
-- **只校验**（`fix-mode: false`，默认）：`contents: read` 即可
-- **自动修复**（`fix-mode: true`）：
-  - 改 PR 标题/正文 → `pulls: write`
-  - amend commit 并 push → 需要 `contents: write` 的 token（`GITHUB_TOKEN` 默认没有，需在 workflow 里换 PAT，或在调用处传 `token: ${{ secrets.XXX }}`）
-- 权限不足时**不是静默失败**：`fix` 模块会打印 `[fix] skipped: branch 'main' is protected; push your fixed commit manually` 或 `[fix] ... failed: <reason>`，可在 runner 日志排查
+- **Check-only** (`fix-mode: false`, the default): `contents: read` is enough.
+- **Auto-fix** (`fix-mode: true`):
+  - Updating the PR title/body needs `pulls: write`.
+  - Amending + pushing a commit needs a token with `contents: write` — the built-in `github.token` does **not** have this. Pass a PAT via the `token` input:
+    ```yaml
+    - uses: RedSamerai/pr-conventional@v0
+      with:
+        fix-mode: 'true'
+        token: ${{ secrets.FIX_PAT }}
+    ```
+- Insufficient permission is **never silent**: the fix module logs `[fix] skipped: branch 'main' is protected; push your fixed commit manually` or `[fix] ... failed: <reason>` so it's visible in the runner logs.
 
-## 本仓库自用：self-check 案例
+## Output
 
-本仓库 `.github/workflows/ci.yml` 的 `self-check` job 在自己身上跑这个 action：
-
-- **push 事件**：回退读最近 1 个 commit（`CHECK_LAST_N_COMMITS` 默认 1）
-- **pull_request 事件**：读平台注入的真实 event payload，校验真实 PR 的标题与 Body
-- **SARIF 上传**：`upload-sarif` 步骤把每次产出的 `pr-conventional.sarif` 送进 GitHub Security tab
-
-**它真的在工作的证据**：commit `1c5228b`（"fix: buildPRContext takes prNumber as param (was reading non-injected env var)"）subject 是 **73 字符**，超过 72 上限，被自己的 self-check 拦下 → 那次 CI 直接红。后来追加一条 58 字符的合规 commit，CI 转绿。
-
-## 开发与发布
-
-```bash
-npm install
-npm test          # vitest，31 个用例
-npm run build     # ncc 打包 dist/index.js（自包含单文件，action 端无需 npm install）
-```
-
-- `dist/` 是构建产物，**必须随源码一起 commit**（CI 有 dist 新鲜度检查，stale 会挂）
-- 改 `src/` 后：`npm run build && git add dist/ && git commit`
-- `action.yml` 用 `node24` runtime，无需 `npm ci`
+Every run writes `pr-conventional.sarif` to the workspace. Feed it to `github/codeql-action/upload-sarif` to surface findings in the Security tab. Uploading SARIF requires the repository's Code scanning to be enabled (Settings → Code security → Code scanning; off by default for private repos) — without it, `upload-sarif` warns but does not block the run.
 
 ## License
 
 MIT — Copyright (c) 2026 RedSamerai
+
+---
+
+<details>
+<summary>Developing this action (repo maintainers)</summary>
+
+```bash
+npm install
+npm test          # vitest
+npm run build     # ncc bundle → dist/index.js (self-contained; no npm install at action runtime)
+```
+
+- `dist/` is a build artifact and **must be committed** alongside source. The repo's own CI verifies it is up to date and fails if stale.
+- After changing `src/`: `npm run build && git add dist/ && git commit`.
+- `action.yml` runs on the `node24` runtime.
+
+The repo also dogfoods the action in `.github/workflows/ci.yml`:
+- `test` job: unit tests + build + a `dist/` freshness gate.
+- `self-check` job: runs the action against the real event payload (PR) or a static sample (push), and uploads the SARIF.
+
+</details>

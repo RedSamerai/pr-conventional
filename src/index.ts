@@ -9,6 +9,7 @@ import { validatePRTitle } from './rules/pr-title';
 import { validatePRBody } from './rules/pr-body';
 import { fixCommitMessage, CommitFixResult } from './fix/git';
 import { applyPRFixes } from './fix/github';
+import { input } from './inputs';
 
 
 const ZERO_SHA = '0000000000000000000000000000000000000000';
@@ -115,8 +116,15 @@ export async function resolvePushCommits(): Promise<CommitRef[]> {
 
 
 async function main(): Promise<void> {
-  const configPath = process.env.CONFIG_PATH || '.github/pr-conventional.yml';
+  // config-path: input > 裸 env > 默认（input() 内部已实现 INPUT_* > 裸 env 优先级）
+  const configPath = input('config-path') || '.github/pr-conventional.yml';
   const config = loadConfig(configPath);
+
+  // fix-mode 语义：input('fix-mode') === 'true' 优先；否则回退配置文件里的 fixMode
+  const fixModeInput = input('fix-mode');
+  const effectiveFixMode = fixModeInput !== undefined
+    ? fixModeInput === 'true'
+    : config.fixMode;
 
 
   let violations: Violation[] = [];
@@ -165,7 +173,7 @@ async function main(): Promise<void> {
 
   let finalViolations = violations;
   let fixedCount = 0;
-  if (config.fixMode) {
+  if (effectiveFixMode) {
     const fixable = violations.filter(x => x.fixable);
 
     // commit-message 修复（本地 amend + push）
@@ -186,11 +194,12 @@ async function main(): Promise<void> {
 
     // PR 字段修复（title + body 合并一次 pulls.update；仅对真正有可修值的字段下 patch）
     if (prNumber !== undefined) {
-      const { fixed } = await applyPRFixes(finalViolations, prNumber);
+      const tokenOverride = input('token');
+      const { fixed, removedRules } = await applyPRFixes(finalViolations, prNumber, tokenOverride);
       if (fixed > 0) {
-        // 移除本次实际修复的 PR 违规（pr-title-length / pr-body-section / pr-body-template）
-        const prFixableRules = new Set(['pr-title-length', 'pr-body-section', 'pr-body-template']);
-        finalViolations = finalViolations.filter(v => !prFixableRules.has(v.rule));
+        // 移除本次实际修复清除的 PR 违规 rule（由 applyPRFixes 返回，语义精确）
+        const clearSet = new Set(removedRules);
+        finalViolations = finalViolations.filter(v => !clearSet.has(v.rule));
         fixedCount += fixed;
       }
     }

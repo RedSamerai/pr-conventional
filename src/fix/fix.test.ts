@@ -32,11 +32,24 @@ describe('buildPRContext', () => {
     expect(ctx).not.toBeNull();
     expect(ctx!.pullNumber).toBe(7);
   });
+  it('tokenOverride takes precedence over GITHUB_TOKEN', () => {
+    process.env.GITHUB_REPOSITORY = 'a/b';
+    process.env.GITHUB_TOKEN = 'injected';
+    const ctx = buildPRContext(7, 'pat-override');
+    expect(ctx).not.toBeNull();
+    expect(ctx!.octokit).toBeDefined();
+  });
+  it('falls back to GITHUB_TOKEN when no override', () => {
+    process.env.GITHUB_REPOSITORY = 'a/b';
+    process.env.GITHUB_TOKEN = 'injected';
+    const ctx = buildPRContext(7, undefined);
+    expect(ctx).not.toBeNull();
+  });
 });
 
 
 describe('applyPRFixes', () => {
-  it('no-op when no fixable PR violations (returns fixed=0, no API call)', async () => {
+  it('no-op when no fixable PR violations', async () => {
     process.env.GITHUB_REPOSITORY = 'a/b';
     process.env.GITHUB_TOKEN = 'x';
     const r = await applyPRFixes(
@@ -45,6 +58,7 @@ describe('applyPRFixes', () => {
     );
     expect(r.fixed).toBe(0);
     expect(r.failed).toBe(0);
+    expect(r.removedRules).toEqual([]);
   });
   it('no-op when context unavailable (missing repo)', async () => {
     delete process.env.GITHUB_REPOSITORY;
@@ -54,5 +68,6 @@ describe('applyPRFixes', () => {
       7
     );
     expect(r.fixed).toBe(0);
+    expect(r.removedRules).toEqual([]);
   });
 });
