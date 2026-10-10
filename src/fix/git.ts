@@ -29,7 +29,9 @@ export async function fixCommitMessage(violation: Violation): Promise<CommitFixR
       console.log(`[fix] skipped: branch '${branch}' is protected; push your fixed commit manually`);
       return { ok: false, skipped: true, reason: `branch '${branch}' is protected` };
     }
-    await git.commit(['--amend', '-m', violation.fixedValue, '--no-edit']);
+    // 用 raw 透传：simple-git 的 commit() 会吞掉自定义参数（amend 场景参数被丢弃），
+    // raw 直接拼 git commit <args>，参数完整。--allow-empty 兜住空 commit amend 被拒的边界。
+    await git.raw(['commit', '--amend', '-m', violation.fixedValue, '--no-edit', '--allow-empty']);
     await git.push(['--force-with-lease', 'origin', branch]);
     console.log(`[fix] amended commit to: ${violation.fixedValue}`);
     return { ok: true };
