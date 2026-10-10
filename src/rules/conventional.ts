@@ -3,6 +3,28 @@ export const CONVENTIONAL_TYPES = [
   'feat', 'fix', 'docs', 'style', 'refactor', 'perf',
   'test', 'chore', 'build', 'ci', 'revert'
 ];
+
+const TYPE_KEYWORDS: Array<{ type: string; keywords: string[] }> = [
+  { type: 'fix', keywords: ['fix', 'bug', '修复'] },
+  { type: 'feat', keywords: ['add', 'new', 'feat', 'feature', '实现'] },
+  { type: 'docs', keywords: ['docs', 'readme', '文档'] },
+  { type: 'test', keywords: ['test', '测试'] },
+  { type: 'refactor', keywords: ['refactor', '重构'] },
+  { type: 'perf', keywords: ['perf', '优化'] },
+];
+
+function guessTypeFromText(text: string, allowed?: string[]): string {
+  const lower = text.toLowerCase();
+  let guess = 'chore';
+  for (const { type, keywords } of TYPE_KEYWORDS) {
+    if (allowed && !allowed.includes(type)) continue;
+    if (keywords.some(k => lower.includes(k))) {
+      guess = type;
+      break;
+    }
+  }
+  return guess;
+}
 export function validateCommitMessage(msg: string, cfg: RuleConfig): Violation[] {
   const violations: Violation[] = [];
   if (!cfg.enabled) return violations;
@@ -22,13 +44,18 @@ export function validateCommitMessage(msg: string, cfg: RuleConfig): Violation[]
   }
   const [, type, , scope, subject] = match;
   if (cfg.types && !cfg.types.includes(type)) {
+    const guessType = guessTypeFromText(header, cfg.types);
+    const correctedType = cfg.types?.includes(guessType) ? guessType : cfg.types[0];
+    const boundary = new RegExp(`^${type}(?=[\\s(:])`);
     violations.push({
       type: 'commit-message',
       message: `Invalid type "${type}". Allowed: ${cfg.types.join(', ')}`,
       rule: 'type',
       severity: 'error',
       fixable: true,
-      fixedValue: header.replace(type, cfg.types[0])
+      fixedValue: boundary.test(header)
+        ? header.replace(boundary, correctedType)
+        : header
     });
   }
   if (cfg.scopeRegex && scope && !new RegExp(cfg.scopeRegex).test(scope)) {
@@ -56,7 +83,8 @@ export function validateCommitMessage(msg: string, cfg: RuleConfig): Violation[]
 }
 function guessFixedCommit(msg: string, cfg: RuleConfig): string {
   const firstLine = msg.trim().split('\n')[0];
-  const type = cfg.types?.[0] || 'chore';
+  const guessType = guessTypeFromText(firstLine, cfg.types);
+  const type = cfg.types?.includes(guessType) ? guessType : (cfg.types?.[0] || 'chore');
   const subject = firstLine.replace(/^[\w-]+(\([^)]+\))?:\s*/, '').trim() || firstLine;
-  return `${type}: ${subject.charAt(0).toLowerCase()}${subject.slice(1)}`;
+  return `${type}: ${subject}`;
 }
