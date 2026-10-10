@@ -1,0 +1,17 @@
+fixMode: false
+rules:
+  commit-message:
+    enabled: true
+    types: [feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert]
+    subjectMaxLength: 72
+  pr-title:
+    enabled: true
+    maxLength: 100
+    pattern: '^(feat|fix|docs|chore|refactor)\(\w+\): .+'
+  pr-body:
+    enabled: true
+    requiredSections: [测试方案, 回滚方案]
+    template: |
+      ## 测试方案
+
+      ## 回滚方案

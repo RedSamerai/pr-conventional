@@ -1,0 +1,7 @@
+{
+  "pull_request": {
+    "number": 1,
+    "title": "feat(ci): self-test",
+    "body": "测试方案：手动验证\n回滚方案：回退 commit\n"
+  }
+}
