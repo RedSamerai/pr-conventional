@@ -24,15 +24,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm ci && npm run build
-      - name: Run action against own PR
+      - name: Run action against real PR (or sample for push)
         run: node dist/index.js
         env:
-          GITHUB_EVENT_NAME: pull_request
-          GITHUB_EVENT_PATH: ./.ci-event.json
+          GITHUB_EVENT_NAME: ${{ github.event_name == 'pull_request' && 'pull_request' || 'push' }}
+          GITHUB_EVENT_PATH: ${{ github.event_name == 'pull_request' && github.event_path || './.ci-event.json' }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create dummy PR event if missing
-        if: failure()
-        run: |
-          echo '{"pull_request":{"number":1,"title":"feat(ci): dummy","body":"测试方案：x\n回滚方案：y"}}' > ./.ci-event.json
-          node dist/index.js
