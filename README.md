@@ -33,13 +33,14 @@ jobs:
         with:
           config-path: .github/pr-conventional.yml
           fix-mode: 'false'
-      - uses: github/codeql-action/upload-sarif@v3
-        if: always()
+      - uses: github/codeql-action/upload-sarif@v4
+        if: success()
         with:
           sarif_file: pr-conventional.sarif
 ```
 
 > 发布到 Marketplace 后可换成 `RedSamerai/pr-conventional@v0` 等 tag。
+> **SARIF 进 Security tab 前提**：仓库需先在 Settings → Code security → Code scanning 启用 Code scanning（私有仓库默认关闭）。未启用时 `upload-sarif` 会 warning 但不阻塞（本仓库 self-check 用 `continue-on-error` 兜底）。
 
 ## 配置
 
