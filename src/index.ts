@@ -3,6 +3,8 @@ import * as path from 'path';
 import { parse } from 'yaml';
 import { Config, Violation } from './types';
 import { validateCommitMessage, CONVENTIONAL_TYPES } from './rules/conventional';
+import { validatePRTitle } from './rules/pr-title';
+import { validatePRBody } from './rules/pr-body';
 
 
 function loadConfig(configPath: string): Config {
@@ -75,6 +77,21 @@ function main(): void {
       }
     } catch (e) {
       console.log(`[pr-conventional] could not read git log: ${(e as Error).message}`);
+    }
+  }
+
+
+  // pull_request 事件：校验标题与 Body
+  if (eventName === 'pull_request' && process.env.GITHUB_EVENT_PATH) {
+    try {
+      const event = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf-8'));
+      const pr = event.pull_request;
+      violations.push(...validatePRTitle(pr.title, config.rules['pr-title']));
+      if (config.rules['pr-body']) {
+        violations.push(...validatePRBody(pr.body || '', config.rules['pr-body']));
+      }
+    } catch (e) {
+      console.log(`[pr-conventional] could not read PR event: ${(e as Error).message}`);
     }
   }
 
