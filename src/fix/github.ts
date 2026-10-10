@@ -10,16 +10,15 @@ export interface PRContext {
 }
 
 
-export function buildPRContext(): PRContext | null {
+export function buildPRContext(prNumber: number): PRContext | null {
   const token = process.env.GITHUB_TOKEN;
   const [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/');
-  const prNumberStr = process.env.GITHUB_PR_NUMBER;
-  if (!token || !owner || !repo || !prNumberStr) return null;
+  if (!token || !owner || !repo || !Number.isFinite(prNumber)) return null;
   return {
     octokit: new Octokit({ auth: token }),
     owner,
     repo,
-    pullNumber: Number(prNumberStr),
+    pullNumber: prNumber,
   };
 }
 
@@ -28,8 +27,8 @@ export async function applyPRFixes(
   violations: Violation[],
   prNumber: number
 ): Promise<{ fixed: number; failed: number }> {
-  const ctx = buildPRContext();
-  if (!ctx || !Number.isFinite(prNumber)) {
+  const ctx = buildPRContext(prNumber);
+  if (!ctx) {
     return { fixed: 0, failed: 0 };
   }
 
@@ -50,7 +49,7 @@ export async function applyPRFixes(
     await ctx.octokit.pulls.update({
       owner: ctx.owner,
       repo: ctx.repo,
-      pull_number: prNumber,
+      pull_number: ctx.pullNumber,
       ...updatePatch,
     });
     if (titleViolation) console.log(`[fix] updated PR title to: ${titleViolation.fixedValue}`);
