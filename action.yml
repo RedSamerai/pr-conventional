@@ -1,0 +1,22 @@
+name: "PR Conventional"
+description: "Enforce & auto-fix Conventional Commits, PR titles & descriptions"
+author: "Your Name"
+branding:
+  icon: "check-circle"
+  color: "green"
+inputs:
+  config-path:
+    description: "Path to config file"
+    required: false
+    default: ".github/pr-conventional.yml"
+  fix-mode:
+    description: "Auto-fix violations (requires write permission)"
+    required: false
+    default: "false"
+  token:
+    description: "GitHub token"
+    required: false
+    default: ${{ github.token }}
+runs:
+  using: "node20"
+  main: "dist/index.js"
