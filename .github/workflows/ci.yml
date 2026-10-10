@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -16,6 +18,13 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - name: Verify dist/ is up-to-date
+        run: |
+          npm run build
+          if ! git diff --exit-code --quiet dist/; then
+            echo "::error::dist/ is stale. Run 'npm run build' and commit the output before merging."
+            exit 1
+          fi
 
 
   self-check:
