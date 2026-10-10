@@ -217,7 +217,10 @@ export {
 };
 
 
-main().catch((err: unknown) => {
-  console.error('[pr-conventional] fatal:', err);
-  process.exit(1);
-});
+// 仅在作为 CLI 入口（ncc 产物被 node 直接执行）时运行；被测试 import 时不执行
+if (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) {
+  main().catch((err: unknown) => {
+    console.error('[pr-conventional] fatal:', err);
+    process.exit(1);
+  });
+}
