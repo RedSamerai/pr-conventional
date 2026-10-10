@@ -13,6 +13,9 @@ coverage/
 # Logs
 *.log
 
+# SARIF output (generated at runtime)
+pr-conventional.sarif
+
 # OS / editor
 .DS_Store
 Thumbs.db
