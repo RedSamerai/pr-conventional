@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 import { parse } from 'yaml';
 import { Config, Violation } from './types';
 import { validateCommitMessage, CONVENTIONAL_TYPES } from './rules/conventional';
@@ -54,6 +55,20 @@ function toSarif(violations: Violation[]): string {
 }
 
 
+function readCommitMessage(sha: string): string {
+  try {
+    const cmd = `git -c core.quotepath=false log -1 --format=%B ${sha}`;
+    return execSync(cmd, {
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'pipe']
+    }).trim();
+  } catch (e) {
+    console.log(`[pr-conventional] could not read commit message for ${sha}: ${(e as Error).message}`);
+    return '';
+  }
+}
+
+
 async function main(): Promise<void> {
   const configPath = process.env.CONFIG_PATH || '.github/pr-conventional.yml';
   const config = loadConfig(configPath);
@@ -67,18 +82,10 @@ async function main(): Promise<void> {
   const sha = process.env.GITHUB_SHA;
   const eventName = process.env.GITHUB_EVENT_NAME;
   if (eventName === 'push' && sha && process.env.GITHUB_REPOSITORY) {
-    // 通过 .git 读本次 push 引入的 commit 信息（Runner 上已 checkout）
-    try {
-      const gitDir = process.env.GITHUB_WORKSPACE ? path.join(process.env.GITHUB_WORKSPACE, '.git') : '.git';
-      const log = fs.readFileSync(path.join(gitDir, 'logs', 'HEAD'), 'utf-8').trim().split('\n');
-      const last = log[log.length - 1] || '';
-      const m = last.split('\t').pop();
-      if (m) {
-        violations.push(...validateCommitMessage(m, config.rules['commit-message']));
-        commitsChecked = 1;
-      }
-    } catch (e) {
-      console.log(`[pr-conventional] could not read git log: ${(e as Error).message}`);
+    const msg = readCommitMessage(sha);
+    if (msg) {
+      violations.push(...validateCommitMessage(msg, config.rules['commit-message']));
+      commitsChecked = 1;
     }
   }
 
