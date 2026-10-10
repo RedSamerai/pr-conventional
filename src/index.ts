@@ -5,6 +5,8 @@ import { Config, Violation } from './types';
 import { validateCommitMessage, CONVENTIONAL_TYPES } from './rules/conventional';
 import { validatePRTitle } from './rules/pr-title';
 import { validatePRBody } from './rules/pr-body';
+import { fixCommitMessage } from './fix/git';
+import { fixPRField } from './fix/github';
 
 
 function loadConfig(configPath: string): Config {
@@ -52,7 +54,7 @@ function toSarif(violations: Violation[]): string {
 }
 
 
-function main(): void {
+async function main(): Promise<void> {
   const configPath = process.env.CONFIG_PATH || '.github/pr-conventional.yml';
   const config = loadConfig(configPath);
 
@@ -86,6 +88,7 @@ function main(): void {
     try {
       const event = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf-8'));
       const pr = event.pull_request;
+      process.env.GITHUB_PR_NUMBER = String(pr.number ?? '');
       violations.push(...validatePRTitle(pr.title, config.rules['pr-title']));
       if (config.rules['pr-body']) {
         violations.push(...validatePRBody(pr.body || '', config.rules['pr-body']));
@@ -103,7 +106,10 @@ function main(): void {
   const errors = violations.filter(v => v.severity === 'error');
   console.log(`[pr-conventional] commits checked: ${commitsChecked}, violations: ${violations.length}, errors: ${errors.length}`);
   if (config.fixMode) {
-    console.log('[pr-conventional] fix-mode enabled (fix logic pending next step)');
+    for (const v of violations.filter(x => x.fixable)) {
+      if (v.type === 'commit-message') await fixCommitMessage(v);
+      else await fixPRField(v);
+    }
   }
 
 
@@ -115,4 +121,7 @@ function main(): void {
 }
 
 
-main();
+main().catch((err: unknown) => {
+  console.error('[pr-conventional] fatal:', err);
+  process.exit(1);
+});
