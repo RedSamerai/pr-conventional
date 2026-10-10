@@ -3,6 +3,7 @@ import * as path from 'path';
 import { parse } from 'yaml';
 import simpleGit, { SimpleGit } from 'simple-git';
 import { Config, Violation } from './types';
+import pkg from '../package.json';
 import { validateCommitMessage, CONVENTIONAL_TYPES } from './rules/conventional';
 import { validatePRTitle } from './rules/pr-title';
 import { validatePRBody } from './rules/pr-body';
@@ -51,7 +52,7 @@ function toSarif(violations: Violation[]): string {
     version: '2.1.0',
     $schema: 'https://json.schemastore.org/sarif-2.1.0.json',
     runs: [{
-      tool: { driver: { name: 'pr-conventional', version: '0.1.0' } },
+      tool: { driver: { name: 'pr-conventional', version: pkg.version } },
       results: violations.map(v => ({
         ruleId: v.rule,
         level: v.severity === 'error' ? 'error' : 'warning',

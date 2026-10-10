@@ -1,6 +1,20 @@
+# PR Conventional — GitHub Action
+#
+# Enforce & auto-fix Conventional Commits, PR titles & descriptions.
+#
+# PERMISSIONS (for fixMode):
+#   启用 fix-mode: true 时，GITHUB_TOKEN 需要具备 contents:write + pulls:write
+#   权限，否则自动修复会跳过并打印 [fix] skipped / [fix] ... failed 日志
+#   （不是静默失败，可在 runner 日志中排查）。
+#   本 action 通过下方 permissions 块声明默认最小权限（contents:read + pulls:write）；
+#   若 fixMode 需改 commit，请在 workflow 调用处将 GITHUB_TOKEN 换成具有
+#   contents:write 的 token（如 PAT）。
 name: "PR Conventional"
 description: "Enforce & auto-fix Conventional Commits, PR titles & descriptions"
 author: "RedSamerai"
+permissions:
+  contents: read
+  pulls: write
 branding:
   icon: "check-circle"
   color: "green"
@@ -18,5 +32,5 @@ inputs:
     required: false
     default: ${{ github.token }}
 runs:
-  using: "node20"
+  using: "node24"
   main: "dist/index.js"
