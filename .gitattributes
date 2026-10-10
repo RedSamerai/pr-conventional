@@ -1,0 +1,4 @@
+dist/* binary
+dist/** -text
+# Mark as generated JS output so dist/ is not counted as the main language
+dist/index.js linguist-generated=true
