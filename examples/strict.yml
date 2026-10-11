@@ -1,0 +1,22 @@
+# 严格模式：所有规则开启、零容忍
+# 适用于：核心服务 / 有严格提交规范要求的仓库
+fixMode: false
+rules:
+  commit-message:
+    enabled: true
+    types: [feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert]
+    scopeRegex: '^[a-z][a-z0-9-]*$'
+    subjectMaxLength: 72
+  pr-title:
+    enabled: true
+    maxLength: 100
+    pattern: '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)\([^)]+\): .+'
+  pr-body:
+    enabled: true
+    requiredSections: [变更说明, 测试方案, 回滚方案]
+    template: |
+      ## 变更说明
+
+      ## 测试方案
+
+      ## 回滚方案

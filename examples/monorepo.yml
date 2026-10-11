@@ -1,0 +1,29 @@
+# 多语言 monorepo：各语言目录各套规则
+# 根配置兜底；各 package 目录用自己的类型白名单 / scope 规则
+# （monorepo 运行时按变更文件归属选规则集，见 C2）
+fixMode: false
+rules:
+  commit-message:
+    enabled: true
+    types: [feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert]
+    subjectMaxLength: 72
+  pr-title:
+    enabled: true
+    maxLength: 100
+    pattern: '^(feat|fix|docs|chore|refactor)\([^)]+\): .+'
+  pr-body:
+    enabled: true
+    requiredSections: [变更说明, 测试方案]
+monorepo:
+  enabled: true
+  packages:
+    - path: "packages/frontend"
+      rules:
+        commit-message:
+          types: [feat, fix, docs, style, chore, test]
+          scopeRegex: '^frontend[a-z0-9-]*$'
+    - path: "packages/backend"
+      rules:
+        commit-message:
+          types: [feat, fix, docs, chore, test, perf]
+          scopeRegex: '^api[a-z0-9-]*$'

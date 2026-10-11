@@ -1,0 +1,13 @@
+# 宽松模式：只查 commit type / scope / subject 长度，不强制 PR 标题格式和 body
+# 适用于：个人仓库 / 团队刚起步 / 不想让格式卡死流程
+fixMode: false
+rules:
+  commit-message:
+    enabled: true
+    types: [feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert]
+    subjectMaxLength: 72
+    # 不配 scopeRegex → 不校验 scope
+  pr-title:
+    enabled: false   # 宽松：不校验 PR 标题
+  pr-body:
+    enabled: false   # 宽松：不校验 PR 正文

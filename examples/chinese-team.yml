@@ -1,0 +1,24 @@
+# 中文团队：中文 subject、中文 body 段落、中文关键词推断类型
+fixMode: true
+rules:
+  commit-message:
+    enabled: true
+    types: [feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert]
+    subjectMaxLength: 72
+  pr-title:
+    enabled: true
+    maxLength: 100
+    pattern: '^(feat|fix|docs|chore|refactor)\(\w+\): .+'
+  pr-body:
+    enabled: true
+    requiredSections: [测试方案, 回滚方案]
+    template: |
+      ## 测试方案
+
+      ## 回滚方案
+
+# 说明：
+# - commit subject 可用中文（如 "feat: 添加登录功能"），type 必须是英文白名单词
+# - 无 conventional 前缀的中文 message（如 "修复登录 bug"）按关键词推断：
+#   修复/bug→fix、添加/实现→feat、文档/readme→docs、测试→test、重构→refactor、优化→perf
+# - 修复逻辑会保留原 subject，不强制改小写，仅在 type 位置做词边界替换

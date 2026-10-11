@@ -1,5 +1,9 @@
 # pr-conventional
 
+[![CI](https://github.com/RedSamerai/pr-conventional/actions/workflows/ci.yml/badge.svg)](https://github.com/RedSamerai/pr-conventional/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Release](https://img.shields.io/github/v/release/RedSamerai/pr-conventional?label=release)](https://github.com/RedSamerai/pr-conventional/releases)
+
 <a id="en"></a>
 
 **English | [中文](#zh)**
@@ -16,6 +20,15 @@ A GitHub Action that enforces — and can automatically fix — Conventional Com
 ## Quick start
 
 Drop a config file into your repo, then call the action from any workflow:
+
+Pick a starting point from [`examples/`](./examples):
+
+| Template | Use when |
+|---|---|
+| [strict.yml](./examples/strict.yml) | Core services, zero-tolerance commit/PR rules |
+| [relaxed.yml](./examples/relaxed.yml) | Personal repos / early teams, commit-only checks |
+| [monorepo.yml](./examples/monorepo.yml) | Multi-package repos, per-package rule overrides |
+| [chinese-team.yml](./examples/chinese-team.yml) | Chinese teams: CN subjects, CN body sections, CN keyword inference |
 
 ```yaml
 # .github/workflows/pr-check.yml
