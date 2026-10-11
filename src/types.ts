@@ -22,6 +22,30 @@ export interface CustomRule {
 }
 
 
+/**
+ * monorepo 按包路由（v0.2.0）。
+ * 每个 commit 按它改动的文件归属到 path 前缀，命中包用「根 config.rules['commit-message']
+ * + package.rules」deepMerge 后的规则集校验；触及多个包时各校验一次（最严语义）。
+ * 无归属 / merge commit / 浅克隆读不到改动文件 → 回退根配置。
+ * PR 标题/正文不路由（整 PR 级别），走根配置（v0.3 再做）。
+ *
+ * 注意：packages[].rules 是 Partial<RuleConfig>（直接挂 types/scopeRegex 等字段），
+ * 不要再套一层 'commit-message'。
+ */
+export interface MonorepoPackage {
+  /** 目录前缀，如 "packages/frontend"；匹配时按「改动文件落在该前缀下」判断 */
+  path: string;
+  /** 该包的 commit-message 规则覆盖（与根 commit-message 规则 deepMerge） */
+  rules?: Partial<RuleConfig>;
+}
+
+
+export interface MonorepoConfig {
+  enabled?: boolean;
+  packages?: MonorepoPackage[];
+}
+
+
 export interface Config {
   /**
    * 继承远程或本地规则包。
@@ -31,7 +55,7 @@ export interface Config {
    */
   extends?: string | string[];
   fixMode?: boolean;
-  monorepo?: boolean;
+  monorepo?: MonorepoConfig;
   rules: {
     'commit-message': RuleConfig;
     'pr-title': RuleConfig;

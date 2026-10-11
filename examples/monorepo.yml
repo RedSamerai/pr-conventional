@@ -1,18 +1,17 @@
-# 多包 monorepo（v0.1.0 用法）
-# 单一根配置 + scopeRegex 约束各模块边界；运行时对 push 区间全部 commit 生效。
+# 多包 monorepo：按 commit 改动文件自动路由到各 package 的规则集（v0.2.0 已实现）
+# 运行时：每个 commit 按它改动的文件归属到 path 前缀，用「根配置 + 该 package.rules」deepMerge 校验；
+# 一个 commit 触及多个 package → 各 package 规则集各校验一次（最严语义）；
+# 只改根目录/公共文件 / merge commit / 浅克隆读不到改动文件 → 回退根配置。
+# PR 标题/正文不路由（整 PR 级别），走根配置（v0.3 再做 PR 路由）。
 #
-# 注意（v0.1.0 现状）：per-package 规则路由（monorepo.packages[]，按变更文件归属选规则集）
-# 计划在 v0.2.0 提供，当前版本运行时不读取该字段。v0.1.0 下如需"各模块不同规则"，
-# 请用多份 config 文件 + 多个 action 调用（每个 config-path 指向一份），或用 scopeRegex
-# 在单一配置内约束允许的 scope 集合。
+# 注意：packages[].rules 是 RuleConfig 本身（直接挂 types/scopeRegex/enabled 等字段），
+# 不要再套一层 "commit-message"。未写的字段继承根 commit-message 规则（deepMerge）。
 fixMode: false
 rules:
   commit-message:
     enabled: true
     types: [feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert]
     subjectMaxLength: 72
-    # 示例：约束所有 commit 的 scope 落在已知模块白名单内（monorepo 常用）
-    # scopeRegex: '^(frontend|backend|shared|infra)[a-z0-9-]*$'
   pr-title:
     enabled: true
     maxLength: 100
@@ -20,3 +19,14 @@ rules:
   pr-body:
     enabled: true
     requiredSections: [变更说明, 测试方案]
+monorepo:
+  enabled: true
+  packages:
+    - path: "packages/frontend"
+      rules:
+        types: [feat, fix, docs, style, chore, test]
+        scopeRegex: '^frontend[a-z0-9-]*$'
+    - path: "packages/backend"
+      rules:
+        types: [feat, fix, docs, chore, test, perf]
+        scopeRegex: '^api[a-z0-9-]*$'

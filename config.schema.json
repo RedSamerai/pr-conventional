@@ -30,7 +30,7 @@
           "type": "boolean"
         },
         "monorepo": {
-          "type": "boolean"
+          "$ref": "#/definitions/MonorepoConfig"
         },
         "rules": {
           "additionalProperties": false,
@@ -94,6 +94,72 @@
         "message",
         "level",
         "targets"
+      ],
+      "type": "object"
+    },
+    "MonorepoConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "packages": {
+          "items": {
+            "$ref": "#/definitions/MonorepoPackage"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "MonorepoPackage": {
+      "additionalProperties": false,
+      "description": "monorepo 按包路由（v0.2.0）。 每个 commit 按它改动的文件归属到 path 前缀，命中包用「根 config.rules['commit-message'] + package.rules」deepMerge 后的规则集校验；触及多个包时各校验一次（最严语义）。 无归属 / merge commit / 浅克隆读不到改动文件 → 回退根配置。 PR 标题/正文不路由（整 PR 级别），走根配置（v0.3 再做）。\n\n注意：packages[].rules 是 Partial<RuleConfig>（直接挂 types/scopeRegex 等字段）， 不要再套一层 'commit-message'。",
+      "properties": {
+        "path": {
+          "description": "目录前缀，如 \"packages/frontend\"；匹配时按「改动文件落在该前缀下」判断",
+          "type": "string"
+        },
+        "rules": {
+          "additionalProperties": false,
+          "description": "该包的 commit-message 规则覆盖（与根 commit-message 规则 deepMerge）",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "maxLength": {
+              "type": "number"
+            },
+            "pattern": {
+              "type": "string"
+            },
+            "requiredSections": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "scopeRegex": {
+              "type": "string"
+            },
+            "subjectMaxLength": {
+              "type": "number"
+            },
+            "template": {
+              "type": "string"
+            },
+            "types": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "path"
       ],
       "type": "object"
     },

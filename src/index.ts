@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'yaml';
 import simpleGit, { SimpleGit } from 'simple-git';
-import { Config, Violation } from './types';
+import { Config, Violation, RuleConfig } from './types';
 import pkg from '../package.json';
 import { validateCommitMessage, CONVENTIONAL_TYPES } from './rules/conventional';
 import { validatePRTitle } from './rules/pr-title';
@@ -12,6 +12,8 @@ import { applyPRFixes } from './fix/github';
 import { input } from './inputs';
 import { parseCliArgs, CLI_HELP } from './cli';
 import { resolveExtendsConfig } from './config/extends';
+import { deepMerge } from './util/merge';
+import { routeConfigs } from './rules/monorepo';
 
 
 const ZERO_SHA = '0000000000000000000000000000000000000000';
@@ -41,19 +43,6 @@ async function loadConfig(configPath: string): Promise<Config> {
 }
 
 
-function deepMerge<T>(target: T, source: Partial<T>): T {
-  const out: Record<string, unknown> = { ...target } as Record<string, unknown>;
-  for (const [key, value] of Object.entries(source)) {
-    if (value !== null && typeof value === 'object' && !Array.isArray(value) && out[key] && typeof out[key] === 'object') {
-      out[key] = deepMerge(out[key] as object, value as object);
-    } else if (value !== undefined) {
-      out[key] = value;
-    }
-  }
-  return out as T;
-}
-
-
 function toSarif(violations: Violation[]): string {
   return JSON.stringify({
     version: '2.1.0',
@@ -73,6 +62,23 @@ function toSarif(violations: Violation[]): string {
 export interface CommitRef {
   sha: string;
   message: string;
+}
+
+
+export function listChangedFiles(sha: string): Promise<string[] | null> {
+  const git: SimpleGit = simpleGit(process.env.GITHUB_WORKSPACE || '.');
+  // 返回某 commit 相对父 commit 改动的文件列表；读不到/merge commit/浅克隆缺失父 → null
+  // 调用方按 monorepo.ts 的语义回退到根配置（安全降级）
+  return (async (): Promise<string[] | null> => {
+    try {
+      const out = await git.raw(['diff-tree', '--no-commit-id', '-r', '--name-only', '--root', sha]);
+      const files = out.split('\n').map(s => s.trim()).filter(Boolean);
+      // diff-tree 对空改动会返回空；对读不到的 sha 会抛（被 catch）
+      return files.length > 0 ? files : null;
+    } catch {
+      return null;
+    }
+  })();
 }
 
 
@@ -156,14 +162,29 @@ async function main(): Promise<void> {
   let prNumber: number | undefined;
 
 
-  // push 事件：校验 before..after 全部 commit
+  // push 事件：校验 before..after 全部 commit（monorepo 启用时按改动文件路由到各 package 规则集）
   const sha = process.env.GITHUB_SHA;
   const eventName = process.env.GITHUB_EVENT_NAME;
+  // 记录每个 commit 的有效 commit-message 规则集（monorepo 路由结果），fixMode 重算时复用同一份
+  const commitRulesBySha = new Map<string, RuleConfig[]>();
   if ((eventName === 'push' || !eventName) && sha && process.env.GITHUB_REPOSITORY) {
     try {
       const commits = await resolvePushCommits();
       for (const c of commits) {
-        violations.push(...validateCommitMessage(c.message, config.rules['commit-message']));
+        // monorepo 路由：按该 commit 改动文件归属选规则集；未启用/无归属/读不到 → 走根配置
+        const files = await listChangedFiles(c.sha);
+        const routed = routeConfigs(files, config);
+        const ruleSets: RuleConfig[] = routed.length > 0
+          ? routed
+          : [config.rules['commit-message']];
+        commitRulesBySha.set(c.sha, ruleSets);
+        // 最严语义：触及多个 package 时各校验一次，全部通过才算过
+        for (const rc of ruleSets) {
+          const vs = validateCommitMessage(c.message, rc);
+          // 打上该 commit 的 sha（存进 violation.file），供 fixMode 重算时找回路由规则集
+          for (const v of vs) v.file = c.sha;
+          violations.push(...vs);
+        }
       }
       commitsChecked = commits.length;
     } catch (e) {
@@ -204,8 +225,16 @@ async function main(): Promise<void> {
     for (const v of fixable.filter(x => x.type === 'commit-message')) {
       const result: CommitFixResult = await fixCommitMessage(v);
       if (result.ok && v.fixedValue) {
-        // 修复成功 → 用 fixedValue 重算该条；全绿则从 violations 移除，否则替换为重算结果
-        const recheck = validateCommitMessage(v.fixedValue, config.rules['commit-message']);
+        // 修复成功 → 用 fixedValue + 该 commit 的路由后规则集重算（与 validate 时同一份 rc，
+        // 保证 monorepo 下按触及 package 的白名单猜类型）
+        const recheckSets: RuleConfig[] = v.file
+          ? (commitRulesBySha.get(v.file) ?? [config.rules['commit-message']])
+          : [config.rules['commit-message']];
+        let recheck: Violation[] = [];
+        for (const rc of recheckSets) {
+          recheck = recheck.concat(validateCommitMessage(v.fixedValue, rc));
+          if (recheck.length > 0) break; // 任一规则集报违规即视为未修好
+        }
         const idx = finalViolations.indexOf(v);
         if (recheck.length === 0) {
           finalViolations.splice(idx, 1);
