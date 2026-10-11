@@ -10,6 +10,7 @@ import { validatePRBody } from './rules/pr-body';
 import { fixCommitMessage, CommitFixResult } from './fix/git';
 import { applyPRFixes } from './fix/github';
 import { input } from './inputs';
+import { parseCliArgs, CLI_HELP } from './cli';
 
 
 const ZERO_SHA = '0000000000000000000000000000000000000000';
@@ -116,15 +117,33 @@ export async function resolvePushCommits(): Promise<CommitRef[]> {
 
 
 async function main(): Promise<void> {
-  // config-path: input > 裸 env > 默认（input() 内部已实现 INPUT_* > 裸 env 优先级）
-  const configPath = input('config-path') || '.github/pr-conventional.yml';
+  // CLI 参数（本地试跑）：--config <path> / --dry-run / --help
+  // 优先级：CLI > INPUT_* > 裸 env > 默认值
+  const args = parseCliArgs(process.argv);
+  if (args.help) {
+    console.log(CLI_HELP);
+    process.exit(0);
+  }
+
+  // config-path: CLI > input > 裸 env > 默认（input() 内部已实现 INPUT_* > 裸 env 优先级）
+  const configPath = args.config || input('config-path') || '.github/pr-conventional.yml';
   const config = loadConfig(configPath);
 
-  // fix-mode 语义：input('fix-mode') === 'true' 优先；否则回退配置文件里的 fixMode
+  // fix-mode 语义：CLI > input('fix-mode') === 'true' 优先；否则回退配置文件里的 fixMode
   const fixModeInput = input('fix-mode');
-  const effectiveFixMode = fixModeInput !== undefined
-    ? fixModeInput === 'true'
-    : config.fixMode;
+  let effectiveFixMode: boolean;
+  if (args.dryRun !== undefined) {
+    effectiveFixMode = false;
+  } else if (fixModeInput !== undefined) {
+    effectiveFixMode = fixModeInput === 'true';
+  } else {
+    effectiveFixMode = !!config.fixMode;
+  }
+  // --dry-run：只报告、不修复（即便 fixMode 为 true 也不改任何东西）
+  const dryRun = args.dryRun === true;
+  if (dryRun) {
+    console.log('[pr-conventional] --dry-run: report only, no fixes will be applied');
+  }
 
 
   let violations: Violation[] = [];
@@ -173,7 +192,7 @@ async function main(): Promise<void> {
 
   let finalViolations = violations;
   let fixedCount = 0;
-  if (effectiveFixMode) {
+  if (effectiveFixMode && !dryRun) {
     const fixable = violations.filter(x => x.fixable);
 
     // commit-message 修复（本地 amend + push）
