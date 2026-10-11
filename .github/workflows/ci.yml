@@ -7,6 +7,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      TZ: UTC
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,6 +32,8 @@ jobs:
   self-check:
     needs: test
     runs-on: ubuntu-latest
+    env:
+      TZ: UTC
     permissions:
       contents: read
       actions: read
