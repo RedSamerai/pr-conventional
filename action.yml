@@ -1,4 +1,4 @@
-# PR Conventional — GitHub Action
+# PR Conventional Fix — GitHub Action
 #
 # Enforce & auto-fix Conventional Commits, PR titles & descriptions.
 #
@@ -9,7 +9,7 @@
 #   本 action 通过下方 permissions 块声明默认最小权限（contents:read + pulls:write）；
 #   若 fixMode 需改 commit，请在 workflow 调用处将 GITHUB_TOKEN 换成具有
 #   contents:write 的 token（如 PAT）。
-name: "PR Conventional"
+name: "PR Conventional Fix"
 description: "Enforce & auto-fix Conventional Commits, PR titles & descriptions"
 author: "RedSamerai"
 permissions:
