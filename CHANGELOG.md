@@ -2,6 +2,18 @@
 
 A GitHub Action that enforces — and can automatically fix — Conventional Commits, PR titles, and PR descriptions.
 
+## 0.2.0 - 2026-10-11
+
+### Added
+- **Monorepo per-package rule routing**: with `monorepo.packages[]`, each commit is routed by its changed files to the matching package's rule set (root config deep-merged with the package override). A commit touching multiple packages is checked against each rule set (strictest semantics, no intersection). Root-level / merge / shallow-clone files fall back to the root config.
+  - `routeConfigs(changedFiles, config)` is a pure function in `src/rules/monorepo.ts` — unit-testable, no git I/O.
+  - The same routed rule set is reused for both validation and fix-mode re-validation, so type inference respects the package allow-list.
+  - `deepMerge` preserves inherited fields: a package that omits `enabled` keeps the root rule's `enabled: true` (no `undefined` clobber).
+- 68 tests total, all green.
+
+### Changed
+- `monorepo` config field is now an object `{ enabled?, packages?: [{ path, rules? }] }` (was a boolean placeholder in 0.1.0). `config.schema.json` regenerated.
+
 ## 0.1.0 - 2026-10-11
 
 ### Added
