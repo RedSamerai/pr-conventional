@@ -1,0 +1,28 @@
+title = "pr-conventional gitleaks config"
+
+[allowlist]
+# 依赖锁文件与 vendor 目录不扫
+paths = ["package-lock.json", "node_modules/"]
+# 已确认安全的占位符/库内字符串（octokit 文档占位 ghp_Pe...0000、REDACTED 标记）
+regexes = ['ghp_Pe\.\.\.0000', 'REDACTED']
+description = "Known-benign placeholders / dependency lock files"
+
+[[rules]]
+id = "github-pat"
+description = "GitHub tokens"
+regex = '''(?i)(ghp|gho|ghu|ghs|github_pat)_[0-9a-zA-Z]{16,}'''
+
+[[rules]]
+id = "agnes-api-key"
+description = "AGNES sk- keys"
+regex = '''\bsk-[0-9a-zA-Z]{20,}\b'''
+
+[[rules]]
+id = "nim-api-key"
+description = "NIM nvapi- keys"
+regex = '''\bnvapi-[A-Za-z0-9_-]{20,}\b'''
+
+[[rules]]
+id = "private-key-block"
+description = "PEM private keys"
+regex = '''-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----'''
