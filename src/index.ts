@@ -11,13 +11,14 @@ import { fixCommitMessage, CommitFixResult } from './fix/git';
 import { applyPRFixes } from './fix/github';
 import { input } from './inputs';
 import { parseCliArgs, CLI_HELP } from './cli';
+import { resolveExtendsConfig } from './config/extends';
 
 
 const ZERO_SHA = '0000000000000000000000000000000000000000';
 const MAX_COMMITS_TO_CHECK = 20;
 
 
-function loadConfig(configPath: string): Config {
+async function loadConfig(configPath: string): Promise<Config> {
   const defaultConfig: Config = {
     rules: {
       'commit-message': { enabled: true, types: CONVENTIONAL_TYPES, subjectMaxLength: 72 },
@@ -25,14 +26,18 @@ function loadConfig(configPath: string): Config {
     }
   };
   const resolved = path.resolve(configPath);
+  let fileConfig: Partial<Config> = {};
   if (fs.existsSync(resolved)) {
-    const fileConfig = parse(fs.readFileSync(resolved, 'utf-8')) as Partial<Config>;
-    if (fileConfig.extends && fileConfig.extends.length > 0) {
-      console.log("[pr-conventional] 'extends' is not yet implemented and was ignored");
-    }
-    return deepMerge(defaultConfig, fileConfig);
+    fileConfig = parse(fs.readFileSync(resolved, 'utf-8')) as Partial<Config>;
   }
-  return defaultConfig;
+
+  // extends：远程/URL 规则包（http(s) 仅），加载后与本地 fileConfig 合并
+  // extends 优先级：extends 提供的基础层 < fileConfig 本地层
+  const extended = await resolveExtendsConfig(defaultConfig, fileConfig.extends);
+  const merged = deepMerge(extended, fileConfig) as Config;
+  // 剔除 extends 本身，避免回写到 SARIF 等下游
+  delete (merged as { extends?: unknown }).extends;
+  return merged;
 }
 
 
@@ -127,7 +132,7 @@ async function main(): Promise<void> {
 
   // config-path: CLI > input > 裸 env > 默认（input() 内部已实现 INPUT_* > 裸 env 优先级）
   const configPath = args.config || input('config-path') || '.github/pr-conventional.yml';
-  const config = loadConfig(configPath);
+  const config = await loadConfig(configPath);
 
   // fix-mode 语义：CLI > input('fix-mode') === 'true' 优先；否则回退配置文件里的 fixMode
   const fixModeInput = input('fix-mode');

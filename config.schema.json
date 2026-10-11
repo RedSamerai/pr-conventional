@@ -13,10 +13,18 @@
           "type": "array"
         },
         "extends": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "继承远程或本地规则包。\n- 接受单个 URL 字符串或字符串数组\n- 仅支持 http(s) URL（避免供应链风险，不支持本地相对路径）\n- 加载失败时静默回退到内置默认规则"
         },
         "fixMode": {
           "type": "boolean"

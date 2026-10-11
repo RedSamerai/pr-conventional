@@ -9,7 +9,7 @@
     "test": "vitest run",
     "lint": "eslint src --ext .ts",
     "prepare": "npm run build",
-    "generate-schema": "ts-json-schema-generator -p src/types.ts -t Config -i pr-conventional.config.schema.json -f tsconfig.json > config.schema.json",
+    "generate-schema": "node scripts/generate-schema.mjs",
     "validate-schema": "node scripts/validate-schema.mjs"
   },
   "dependencies": {

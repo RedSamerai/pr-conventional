@@ -40,6 +40,8 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - run: npm ci && npm run build
       - name: Run action against real PR (or sample for push)
         run: node dist/index.js
