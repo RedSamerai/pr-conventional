@@ -14,7 +14,7 @@ A GitHub Action that enforces — and can automatically fix — Conventional Com
 
 - **Auto-fix, not just fail.** With `fix-mode` on, it amends commit messages, appends missing PR-body sections, and truncates over-long titles — then re-validates. Only exits 0 when it's genuinely clean.
 - **Checks the whole push, not just HEAD.** A push of 5 commits is validated across the `before..after` range (up to 20), so no one smuggles bad commits through.
-- **Monorepo-aware.** Point `config-path` at any directory; constrain module boundaries with `scopeRegex`.
+- **Monorepo-friendly.** Point `config-path` at any directory and constrain module boundaries with `scopeRegex`. Per-package rule routing (a `monorepo.packages[]` config that picks a rule set by which files changed) is planned for v0.2.0.
 - **SARIF out of the box.** Every run writes `pr-conventional.sarif`; pipe it into `upload-sarif` and findings land in the GitHub Security tab.
 
 ## Quick start
@@ -27,7 +27,7 @@ Pick a starting point from [`examples/`](./examples):
 |---|---|
 | [strict.yml](./examples/strict.yml) | Core services, zero-tolerance commit/PR rules |
 | [relaxed.yml](./examples/relaxed.yml) | Personal repos / early teams, commit-only checks |
-| [monorepo.yml](./examples/monorepo.yml) | Multi-package repos, per-package rule overrides |
+| [monorepo.yml](./examples/monorepo.yml) | Multi-package repos: one config + `scopeRegex` per module (per-package routing planned for v0.2.0) |
 | [chinese-team.yml](./examples/chinese-team.yml) | Chinese teams: CN subjects, CN body sections, CN keyword inference |
 
 ```yaml
@@ -82,7 +82,8 @@ Default file location is `.github/pr-conventional.yml` (override with `config-pa
 | `rules.pr-body.requiredSections` | string[] | — | Sections the body must contain; missing ones are appended when `fix-mode` is on. |
 | `rules.pr-body.template` | string | — | Used only when the body is empty (never overwrites existing content). |
 | `fixMode` | bool | `false` | Config-file switch for auto-fix (in addition to the `fix-mode` input). |
-| `extends` | string[] | — | Reserved, not implemented — a warning is logged and it is ignored. |
+| `extends` | string \| string[] | — | Inherit one or more rule packs from a remote HTTP(S) URL (e.g. `https://…/rules/strict@v1`). Cached for 24h; only `http(s)` URLs are accepted (no local paths, for supply-chain safety); on fetch failure it silently falls back to the built-in defaults. |
+| `monorepo` | bool | — | Reserved for per-package rule routing (planned for v0.2.0). Not read at runtime in v0.1.0. |
 
 ### Example
 
@@ -195,7 +196,8 @@ jobs:
 | `rules.pr-body.requiredSections` | string[] | — | 正文必须包含的段落名；`fix-mode` 开启时缺失的会被自动追加。 |
 | `rules.pr-body.template` | string | — | 仅在正文为空时使用（绝不覆盖已有内容）。 |
 | `fixMode` | bool | `false` | 配置文件里的自动修复开关（与 `fix-mode` 入参二选一，入参优先）。 |
-| `extends` | string[] | — | 预留未实现——会打 warning 并忽略。 |
+| `extends` | string \| string[] | — | 从一个或多个远程 HTTP(S) URL 继承规则包（如 `https://…/rules/strict@v1`）。缓存 24h；只接受 `http(s)` URL（禁用本地路径，供应链安全）；拉取失败静默回退内置默认规则。 |
+| `monorepo` | bool | — | 预留：按 package 路由规则（计划 v0.2.0）。v0.1.0 运行时不读取该字段。 |
 
 ### 示例配置
 

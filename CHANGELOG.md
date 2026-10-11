@@ -10,8 +10,8 @@ A GitHub Action that enforces — and can automatically fix — Conventional Com
 - Auto-fix: amend commit messages, append missing PR-body sections, truncate over-long titles (opt-in via `fix-mode`)
 - Multi-commit push validation across `before..after` (up to 20)
 - SARIF output (`pr-conventional.sarif`) for GitHub Security tab
-- `extends` config field (reserved, warns + ignores when set)
-- Monorepo-aware via `config-path` + `scopeRegex`
+- `extends` config field: inherit one or more rule packs from a remote HTTP(S) URL (24h cache, silent fallback to built-in defaults on failure; local paths rejected for supply-chain safety)
+- Monorepo-friendly via `config-path` + `scopeRegex` (per-package rule routing planned for v0.2.0)
 - CLI flags: `--config`, `--dry-run`, `--help`
 - 44+ unit/integration tests, all green
 
