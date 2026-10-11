@@ -27,7 +27,11 @@ export function validatePRBody(body: string, cfg: RuleConfig): Violation[] {
           fixedValue: undefined
         });
       }
-      // 追加语义：保留原 body，仅补缺失 section（统一可修值挂在第一条 section violation 上）
+      // 追加语义：保留原 body，仅补缺失 section。
+      // 注意（设计脆弱点）：全部缺失项的修复值"集中"挂在第一条 section violation 上
+      // （appendMissingSections 一次性追加所有缺失项），applyPRFixes 用 find 只取首条
+      // fixable-with-value 即可修掉全部缺失 section。若未来把 fixedValue 改成"每条 section
+      // 独立值"，applyPRFixes 的 find 会漏修——届时需改为收集全部再合并。
       violations.find(v => v.rule === 'pr-body-section')!.fixedValue = appendMissingSections(body, missing);
     }
   }
