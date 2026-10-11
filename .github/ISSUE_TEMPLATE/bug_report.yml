@@ -1,0 +1,50 @@
+name: Bug report
+description: Report a reproducible bug in pr-conventional.
+title: "bug: "
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: "Steps to reproduce, including the config file, the commit message / PR title / body you tested, and the event (push or pull_request)."
+      placeholder: |
+        config:
+          rules:
+            pr-title:
+              pattern: '^(feat|fix): .+'
+        PR title: "random title"
+        event: pull_request
+        output: ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / runner output
+      description: Paste the relevant runner output, including any `[pr-conventional] ...` lines.
+    validations:
+      required: false
+  - type: dropdown
+    id: version
+    attributes:
+      label: pr-conventional version
+      options:
+        - v0.1.0
+        - other
+    validations:
+      required: false

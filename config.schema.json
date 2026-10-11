@@ -1,0 +1,133 @@
+{
+  "$id": "pr-conventional.config.schema.json",
+  "$ref": "#/definitions/Config",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Config": {
+      "additionalProperties": false,
+      "properties": {
+        "customRules": {
+          "items": {
+            "$ref": "#/definitions/CustomRule"
+          },
+          "type": "array"
+        },
+        "extends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "fixMode": {
+          "type": "boolean"
+        },
+        "monorepo": {
+          "type": "boolean"
+        },
+        "rules": {
+          "additionalProperties": false,
+          "properties": {
+            "commit-message": {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            "pr-body": {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            "pr-title": {
+              "$ref": "#/definitions/RuleConfig"
+            }
+          },
+          "required": [
+            "commit-message",
+            "pr-title"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "rules"
+      ],
+      "type": "object"
+    },
+    "CustomRule": {
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "enum": [
+            "error",
+            "warning"
+          ],
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "targets": {
+          "items": {
+            "enum": [
+              "commit-message",
+              "pr-title",
+              "pr-body"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "pattern",
+        "message",
+        "level",
+        "targets"
+      ],
+      "type": "object"
+    },
+    "RuleConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "maxLength": {
+          "type": "number"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "requiredSections": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "scopeRegex": {
+          "type": "string"
+        },
+        "subjectMaxLength": {
+          "type": "number"
+        },
+        "template": {
+          "type": "string"
+        },
+        "types": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    }
+  }
+}
+

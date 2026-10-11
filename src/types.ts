@@ -1,3 +1,6 @@
+/**
+ * @schema pr-conventional config — full field reference.
+ */
 export interface RuleConfig {
   enabled: boolean;
   types?: string[];

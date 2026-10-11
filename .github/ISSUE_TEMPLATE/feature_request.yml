@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest a new rule, config option, or improvement.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+      description: What problem does this solve, or what would be easier with this feature?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How should it work? Config shape, default values, fix behavior.
+    validations:
+      required: false
+  - type: textarea
+    id: alt
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: checkboxes
+    id: willingness
+    attributes:
+      label: Willing to contribute
+      options:
+        - label: I am willing to submit a PR for this.
+          checked: false
