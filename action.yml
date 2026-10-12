@@ -31,6 +31,10 @@ inputs:
     description: "GitHub token"
     required: false
     default: ${{ github.token }}
+  license-key:
+    description: "Pro license key (optional). Without a key the action runs in FREE tier: monorepo routing and extends are ignored. Get a key from the author to unlock all features."
+    required: false
+    default: ""
 runs:
   using: "node24"
   main: "dist/index.js"

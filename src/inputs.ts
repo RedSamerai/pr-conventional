@@ -14,6 +14,7 @@ export const INPUT_MAP = {
   'config-path': 'CONFIG_PATH',
   'fix-mode': 'FIX_MODE',
   token: 'GITHUB_TOKEN_OVERRIDE',
+  'license-key': 'LICENSE_KEY',
 } as const;
 
 

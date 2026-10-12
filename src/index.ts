@@ -14,6 +14,10 @@ import { parseCliArgs, CLI_HELP } from './cli';
 import { resolveExtendsConfig } from './config/extends';
 import { deepMerge } from './util/merge';
 import { routeConfigs } from './rules/monorepo';
+import {
+  licenseStatus, getLicenseKey, applyLicenseGate,
+  FREE_TIER_MSG, INVALID_KEY_MSG,
+} from './license';
 
 
 const ZERO_SHA = '0000000000000000000000000000000000000000';
@@ -138,7 +142,19 @@ async function main(): Promise<void> {
 
   // config-path: CLI > input > 裸 env > 默认（input() 内部已实现 INPUT_* > 裸 env 优先级）
   const configPath = args.config || input('config-path') || '.github/pr-conventional.yml';
-  const config = await loadConfig(configPath);
+  let config = await loadConfig(configPath);
+
+  // license-key 门控（Phase 1/4）：三态 pro / free / invalid
+  // - pro：全功能（monorepo + extends 均生效）
+  // - free / invalid：忽略 monorepo 与 extends，降级为根 config；基础校验 + auto-fix + SARIF 保留
+  const status = licenseStatus(getLicenseKey());
+  if (status === 'free') {
+    console.log(FREE_TIER_MSG);
+    config = applyLicenseGate(config, status);
+  } else if (status === 'invalid') {
+    console.error(INVALID_KEY_MSG);
+    config = applyLicenseGate(config, status);
+  }
 
   // fix-mode 语义：CLI > input('fix-mode') === 'true' 优先；否则回退配置文件里的 fixMode
   const fixModeInput = input('fix-mode');
@@ -171,7 +187,8 @@ async function main(): Promise<void> {
     try {
       const commits = await resolvePushCommits();
       for (const c of commits) {
-        // monorepo 路由：按该 commit 改动文件归属选规则集；未启用/无归属/读不到 → 走根配置
+        // monorepo 路由（仅 PRO 档启用；FREE/INVALID 时 applyLicenseGate 已删除 config.monorepo，routeConfigs 自然返回 []）：
+        // 按该 commit 改动文件归属选规则集；未启用/无归属/读不到 → 走根配置
         const files = await listChangedFiles(c.sha);
         const routed = routeConfigs(files, config);
         const ruleSets: RuleConfig[] = routed.length > 0
