@@ -2,6 +2,12 @@
 
 A GitHub Action that enforces — and can automatically fix — Conventional Commits, PR titles, and PR descriptions.
 
+## 0.3.2 - 2026-10-12
+
+### Changed
+- `scripts/keygen.ts` now defaults to **lifetime** keys (`payload = { v: 1 }`, no `expires`). `--expires` is now optional (kept for trials / back-compat only).
+- Keygen summary line prints `lifetime` by default; shows the expiry date only when `--expires` is supplied.
+
 ## 0.3.1 - 2026-10-12
 
 ### Changed

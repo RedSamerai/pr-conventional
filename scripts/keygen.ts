@@ -7,12 +7,12 @@ import { PCF_SECRET, signKey, type LicensePayload } from '../src/license.js';
 // Phase 1 荣誉制边界：本地 keygen 与买家自签在密码学上等价（secret 公开）。
 
 interface Args {
-  expires: string;
+  expires: string; // 空串 = 不传 --expires（默认，终身）
   note: string;
 }
 
 function parseArgs(argv: string[]): Args {
-  const args: Args = { expires: '365d', note: '' };
+  const args: Args = { expires: '', note: '' };
   for (const raw of argv) {
     if (raw.startsWith('--expires=')) args.expires = raw.slice('--expires='.length);
     else if (raw.startsWith('--note=')) args.note = raw.slice('--note='.length);
@@ -31,10 +31,12 @@ function parseArgs(argv: string[]): Args {
 function printHelp(): void {
   console.log(
     [
-      'Usage: keygen [--expires=365d|--expires=2026-12-31] [--note="..."]',
+      'Usage: keygen [--expires=Nd|Nm|Ny|YYYY-MM-DD] [--note="..."]',
       '',
-      '  --expires   default 365d; supports Nd / Nm / Ny or an ISO date (YYYY-MM-DD)',
-      '  --note      optional free-text, printed only (not written into the key)',
+      '  (no --expires)  lifetime key (default; one-time purchase, no expiry)',
+      '  --expires        optional; supports Nd / Nm / Ny or an ISO date (YYYY-MM-DD)',
+      '                   only for trial / back-compat; not the default',
+      '  --note           optional free-text, printed only (not written into the key)',
     ].join('\n'),
   );
 }
@@ -78,13 +80,15 @@ function toIsoDate(d: Date): string {
 
 function main(): void {
   const args = parseArgs(process.argv.slice(2));
-  const expires = resolveExpiry(args.expires);
-  const payload: LicensePayload = { v: 1, expires };
+  const lifetime = args.expires === '';
+  const expires = lifetime ? undefined : resolveExpiry(args.expires);
+  const payload: LicensePayload = lifetime ? { v: 1 } : { v: 1, expires };
   const key = signKey(PCF_SECRET, payload);
   const generated = toIsoDate(new Date());
 
   console.log(`KEY: ${key}`);
-  const parts = [`expires: ${expires}`];
+  const parts: string[] = [];
+  parts.push(lifetime ? 'lifetime' : `expires: ${expires}`);
   if (args.note) parts.push(`note: ${args.note}`);
   parts.push(`generated: ${generated}`);
   console.log(parts.join(' | '));
