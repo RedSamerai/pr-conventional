@@ -59,6 +59,16 @@ jobs:
 
 > Publish to your account's Marketplace and reference by tag, e.g. `RedSamerai/pr-conventional@v0`.
 
+## Free / Pro
+
+| Feature | FREE (no key) | PRO (license-key) |
+|---|:-:|:-:|
+| commit / PR validation, auto-fix, SARIF | ✅ | ✅ |
+| Monorepo per-package routing | — | ✅ |
+| `extends` remote rule packs | — | ✅ |
+
+Pass a key via the `license-key` input, e.g. `license-key: ${{ secrets.LICENSE_KEY }}`. Without a key the action runs in FREE tier (monorepo routing and `extends` are ignored; base validation, auto-fix and SARIF still work) and prints a FREE-tier notice. Invalid or expired keys degrade to FREE and print an error — they never crash the run. **Get a PRO key: contact the author.**
+
 ## Inputs
 
 | Input | Default | Description |
@@ -66,6 +76,7 @@ jobs:
 | `config-path` | `.github/pr-conventional.yml` | Path to the config file (YAML or JSON). |
 | `fix-mode` | `false` | `'true'` enables auto-fix. Requires write permission (see Token permissions). |
 | `token` | `${{ github.token }}` | Token used for fixes. Supply a PAT with `contents: write` to amend commits. |
+| `license-key` | `` (empty) | PRO license key. Empty = FREE tier (monorepo routing & `extends` disabled). See [Free / Pro](#free--pro). |
 
 ## Configuration
 

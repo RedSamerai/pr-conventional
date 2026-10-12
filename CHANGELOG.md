@@ -2,6 +2,24 @@
 
 A GitHub Action that enforces — and can automatically fix — Conventional Commits, PR titles, and PR descriptions.
 
+## 0.3.0 - 2026-10-12
+
+### Added
+- New `license-key` input: FREE / PRO two-tier gating
+  - No key → **FREE**: monorepo routing and `extends` are ignored; base validation + auto-fix + SARIF are kept; a FREE-tier notice is printed
+  - Invalid / expired key → degrades to FREE + prints an error (does not crash)
+  - Key format `PCF-<b64url payload>.<b64url HMAC-SHA256 signature>`, UTC date expiry check
+- 11 new tests (total 79), all green
+
+### Changed
+- Phase 1 is honor-system: the HMAC secret ships in `dist/index.js` (public), so it can be reverse-engineered to forge a key. Phase 4 will move to server-side verification; the 0.3.0 `PCF_SECRET` is generation-1 and will be invalidated when that lands.
+- `gitleaks.toml` allowlists `PCF_SECRET` with a Phase-1 design note.
+
+## 0.2.1 - 2026-10-12
+
+### Changed
+- Product renamed to **PR Conventional Fix** (action.yml `name`/`description`); repository slug `pr-conventional` unchanged. No behavior change.
+
 ## 0.2.0 - 2026-10-11
 
 ### Added
