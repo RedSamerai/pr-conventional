@@ -1,5 +1,7 @@
 # pr-conventional
 
+> **Note:** the action's display name is **PR Conventional Fix**, but you still reference it by repository slug: `RedSamerai/pr-conventional@v0.2.1`. The Marketplace URL follows the display name; code references use the slug.
+
 [![CI](https://github.com/RedSamerai/pr-conventional/actions/workflows/ci.yml/badge.svg)](https://github.com/RedSamerai/pr-conventional/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Release](https://img.shields.io/github/v/release/RedSamerai/pr-conventional?label=release)](https://github.com/RedSamerai/pr-conventional/releases)
