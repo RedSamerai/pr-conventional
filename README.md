@@ -67,7 +67,7 @@ jobs:
 | Monorepo per-package routing | — | ✅ |
 | `extends` remote rule packs | — | ✅ |
 
-Pass a key via the `license-key` input, e.g. `license-key: ${{ secrets.LICENSE_KEY }}`. Without a key the action runs in FREE tier (monorepo routing and `extends` are ignored; base validation, auto-fix and SARIF still work) and prints a FREE-tier notice. Invalid or expired keys degrade to FREE and print an error — they never crash the run. **Get a PRO key: contact the author.**
+Pass a key via the `license-key` input, e.g. `license-key: ${{ secrets.LICENSE_KEY }}`. Without a key the action runs in FREE tier (monorepo routing and `extends` are ignored; base validation, auto-fix and SARIF still work) and prints a FREE-tier notice. Invalid keys degrade to FREE and print an error — they never crash the run. **Get a PRO key: one-time purchase, lifetime license — contact the author.**
 
 ## Inputs
 

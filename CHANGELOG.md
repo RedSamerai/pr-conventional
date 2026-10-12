@@ -2,6 +2,14 @@
 
 A GitHub Action that enforces — and can automatically fix — Conventional Commits, PR titles, and PR descriptions.
 
+## 0.3.1 - 2026-10-12
+
+### Changed
+- License keys are now **lifetime** (one-time purchase, no expiry). `LicensePayload.expires` is optional; a key with no `expires` is `pro` indefinitely.
+- Keys that still carry an `expires` field keep their legacy semantics (expired → `invalid`), so previously issued keys remain valid until their stated date.
+- README Free/Pro copy updated to "one-time purchase, lifetime license".
+- Added 3 tests (total 82).
+
 ## 0.3.0 - 2026-10-12
 
 ### Added

@@ -42,7 +42,8 @@ export function fromB64url(s: string): Buffer {
 
 export interface LicensePayload {
   v: 1;
-  expires: string; // 'YYYY-MM-DD'
+  /** 可选。Phase 1 发行的 key 一律终身（无 expires）；此字段仅为兼容旧格式保留。 */
+  expires?: string; // 'YYYY-MM-DD'
 }
 
 
@@ -93,12 +94,16 @@ export function licenseStatus(key: string, now: Date = new Date()): LicenseStatu
   } catch {
     return 'invalid';
   }
-  if (payload.v !== 1 || typeof payload.expires !== 'string') return 'invalid';
+  if (payload.v !== 1) return 'invalid';
 
-  // 过期检查：expires 早于今天（按 UTC 日期）→ invalid
-  const exp = Date.parse(payload.expires);
-  if (Number.isNaN(exp)) return 'invalid';
-  if (exp < startOfUtcDay(now)) return 'invalid';
+  // Phase 1 发行 key 一律终身：无 expires 字段 → pro（不做过期判断）。
+  // 有 expires 字段的路径仅为兼容旧格式保留（已发出去带 expires 的 key 仍按原语义校验）。
+  if (payload.expires !== undefined) {
+    if (typeof payload.expires !== 'string') return 'invalid';
+    const exp = Date.parse(payload.expires);
+    if (Number.isNaN(exp)) return 'invalid';
+    if (exp < startOfUtcDay(now)) return 'invalid';
+  }
 
   return 'pro';
 }

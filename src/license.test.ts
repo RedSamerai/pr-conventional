@@ -62,6 +62,21 @@ describe('licenseStatus', () => {
     const key = signKey(otherSecret, { v: 1, expires: futureDate(30) });
     expect(licenseStatus(key)).toBe('invalid');
   });
+
+  it('lifetime. key WITHOUT expires (legacy not applicable, Phase 1 = lifetime) -> pro', () => {
+    const key = signKey(PCF_SECRET, { v: 1 });
+    expect(licenseStatus(key)).toBe('pro');
+  });
+
+  it('lifetime. key WITH future expires -> pro', () => {
+    const key = signKey(PCF_SECRET, { v: 1, expires: futureDate(30) });
+    expect(licenseStatus(key)).toBe('pro');
+  });
+
+  it('lifetime. key WITH past expires (legacy compat path) -> invalid', () => {
+    const key = signKey(PCF_SECRET, { v: 1, expires: pastDate(-1) });
+    expect(licenseStatus(key)).toBe('invalid');
+  });
 });
 
 
