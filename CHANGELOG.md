@@ -5,8 +5,8 @@ A GitHub Action that enforces — and can automatically fix — Conventional Com
 ## 0.3.2 - 2026-10-12
 
 ### Changed
-- `scripts/keygen.ts` now defaults to **lifetime** keys (`payload = { v: 1 }`, no `expires`). `--expires` is now optional (kept for trials / back-compat only).
-- Keygen summary line prints `lifetime` by default; shows the expiry date only when `--expires` is supplied.
+- License keys are now **lifetime** by default (one-time purchase, no expiry). Keys carry no `expires` field unless one is explicitly supplied.
+- Summary reporting for issued keys prints `lifetime` by default; shows an expiry date only when one was requested.
 
 ## 0.3.1 - 2026-10-12
 

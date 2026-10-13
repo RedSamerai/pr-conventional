@@ -21,3 +21,6 @@ pr-conventional.sarif
 Thumbs.db
 .idea/
 .vscode/
+
+# local license keygen (kept out of public repo; author's tooling)
+scripts/keygen.ts
