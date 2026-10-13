@@ -67,7 +67,7 @@ jobs:
 | Monorepo per-package routing | — | ✅ |
 | `extends` remote rule packs | — | ✅ |
 
-Pass a key via the `license-key` input, e.g. `license-key: ${{ secrets.LICENSE_KEY }}`. Without a key the action runs in FREE tier (monorepo routing and `extends` are ignored; base validation, auto-fix and SARIF still work) and prints a FREE-tier notice. Invalid keys degrade to FREE and print an error — they never crash the run. **Get a PRO key: one-time purchase, lifetime license — contact the author.**
+Pass a key via the `license-key` input, e.g. `license-key: ${{ secrets.LICENSE_KEY }}`. Without a key the action runs in FREE tier (monorepo routing and `extends` are ignored; base validation, auto-fix and SARIF still work) and prints a FREE-tier notice. Invalid keys degrade to FREE and print an error — they never crash the run. **Get a PRO key:** [Buy a lifetime Pro license — $29 one-time](https://www.creem.io/payment/prod_6oA2Fa3K1ufiv72366lv0J). Delivered instantly after purchase. Set it in GitHub Secrets as `LICENSE_KEY`.
 
 ## Inputs
 
